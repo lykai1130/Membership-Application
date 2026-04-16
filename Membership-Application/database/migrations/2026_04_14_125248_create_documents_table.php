@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('member_id')->constrained('members')->cascadeOnDelete();
+            $table->string('document_name');
+            $table->string('document_path');
             $table->timestamps();
         });
     }
