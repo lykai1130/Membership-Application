@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AddressType extends Model
 {
@@ -10,4 +11,9 @@ class AddressType extends Model
         'type',
         'status'
     ];
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class, 'address_type_id');
+    }
 }
