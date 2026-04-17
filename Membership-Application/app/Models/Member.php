@@ -23,7 +23,7 @@ class Member extends Model
         return $this->hasMany(Address::class, 'member_id');
     }
 
-    public function referrer(): BelongsTo
+    public function referral(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'referral_id');
     }
