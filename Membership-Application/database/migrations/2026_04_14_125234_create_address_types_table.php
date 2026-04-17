@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('address_types', function (Blueprint $table) {
             $table->id();
             $table->string('type');
-            $table->char('status');
+            $table->char('status', 1);
             $table->timestamps();
         });
     }

@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('reward', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('promotion_id')->constrained('promotion')->cascadeOnDelete();
+            $table->integer('referral_count');
+            $table->integer('reward_value');
             $table->timestamps();
         });
     }

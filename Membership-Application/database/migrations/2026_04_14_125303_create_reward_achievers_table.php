@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('reward_achievers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('member_id')->constrained('members')->cascadeOnDelete();
+            $table->foreignId('reward_id')->constrained('reward');
+            $table->date('achieved_at');
             $table->timestamps();
         });
     }
