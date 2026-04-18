@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Member extends Model
 {
@@ -31,5 +32,10 @@ class Member extends Model
     public function referrals(): HasMany
     {
         return $this->hasMany(Member::class, 'referral_id');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Documents::class, 'documentable');
     }
 }

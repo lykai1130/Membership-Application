@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Address extends Model
 {
@@ -28,5 +29,10 @@ class Address extends Model
     public function addressType(): BelongsTo
     {
         return $this->belongsTo(AddressType::class, 'address_type_id');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Documents::class, 'documentable');
     }
 }

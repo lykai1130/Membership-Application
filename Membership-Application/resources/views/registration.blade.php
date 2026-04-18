@@ -58,6 +58,25 @@
             gap: 14px;
         }
 
+        .section-title {
+            margin: 16px 0 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .address-card {
+            margin-top: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            background: #f8fbff;
+        }
+
+        .address-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .field {
             display: flex;
             flex-direction: column;
@@ -143,6 +162,16 @@
             background: #eff6ff;
         }
 
+        .btn-danger {
+            border-color: #dc2626;
+            color: #dc2626;
+            background: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #fef2f2;
+        }
+
         @media (max-width: 640px) {
             .grid {
                 grid-template-columns: 1fr;
@@ -163,33 +192,33 @@
             <p style="margin:0 0 14px;color:#b91c1c;font-weight:600;">{{ $errors->first() }}</p>
         @endif
 
-        <form id="registration-form" method="POST" action="{{ url('/registration') }}">
+        <form id="registration-form" method="POST" action="{{ url('/registration') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="grid">
                 <div class="field full">
                     <label for="name">Name</label>
-                    <input id="name" type="text" name="name" value="{{ old('name') }}" required>
+                    <input id="name" type="text" name="name" value="{{ old('name') }}" data-required="true" required>
                 </div>
 
                 <div class="field full">
                     <label for="email">Email</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" data-required="true" required>
                 </div>
 
                 <div class="field">
                     <label for="phone">Phone</label>
-                    <input id="phone" type="text" name="phone" value="{{ old('phone') }}" required>
+                    <input id="phone" type="text" name="phone" value="{{ old('phone') }}" data-required="true" required>
                 </div>
 
                 <div class="field">
                     <label for="dob">Date of Birth</label>
-                    <input id="dob" type="date" name="dob" value="{{ old('dob') }}" required>
+                    <input id="dob" type="date" name="dob" value="{{ old('dob') }}" data-required="true" required>
                 </div>
 
                 <div class="field">
                     <label for="gender">Gender</label>
-                    <select id="gender" name="gender" required>
+                    <select id="gender" name="gender" data-required="true" required>
                         <option value="">Select Gender</option>
                         <option value="male" {{ old('gender') === 'male' ? 'selected' : '' }}>Male</option>
                         <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
@@ -201,9 +230,91 @@
                     <input id="referral_code" type="text" name="referral_code" maxlength="6" value="{{ old('referral_code') }}">
                 </div>
 
+                <div class="field">
+                    <label for="avatar_image">Avatar Image</label>
+                    <input id="avatar_image" type="file" name="avatar_image" accept="image/*">
+                </div>
+
+                <div class="field">
+                    <label for="proof_of_address">Proof Of Address Document</label>
+                    <input id="proof_of_address" type="file" name="proof_of_address">
+                </div>
+
             </div>
 
+            @if (!empty($addressTypes) && $addressTypes->count())
+                <h2 class="section-title">Addresses</h2>
+                @php
+                    $oldAddresses = old('addresses');
+                    if (!is_array($oldAddresses) || count($oldAddresses) === 0) {
+                        $oldAddresses = [[
+                            'address_type_id' => '',
+                            'line1' => '',
+                            'line2' => '',
+                            'city' => '',
+                            'state' => '',
+                            'postal_code' => '',
+                            'country' => '',
+                        ]];
+                    }
+                    $oldAddresses = array_values(array_slice($oldAddresses, 0, 2));
+                @endphp
+
+                <div id="addresses-container">
+                    @foreach ($oldAddresses as $index => $address)
+                        <div class="grid address-card" data-address-index="{{ $index }}">
+                            <div class="field full">
+                                <label for="address_{{ $index }}_address_type_id">Address Type</label>
+                                <select id="address_{{ $index }}_address_type_id" name="addresses[{{ $index }}][address_type_id]" data-required="true" required>
+                                    <option value="">Select Address Type</option>
+                                    @foreach ($addressTypes as $addressType)
+                                        <option value="{{ $addressType->id }}" {{ (string) ($address['address_type_id'] ?? '') === (string) $addressType->id ? 'selected' : '' }}>
+                                            {{ $addressType->type }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="field full">
+                                <label for="address_{{ $index }}_line1">Address Line 1</label>
+                                <input id="address_{{ $index }}_line1" type="text" name="addresses[{{ $index }}][line1]" value="{{ $address['line1'] ?? '' }}" data-required="true" required>
+                            </div>
+
+                            <div class="field full">
+                                <label for="address_{{ $index }}_line2">Address Line 2 (optional)</label>
+                                <input id="address_{{ $index }}_line2" type="text" name="addresses[{{ $index }}][line2]" value="{{ $address['line2'] ?? '' }}">
+                            </div>
+
+                            <div class="field">
+                                <label for="address_{{ $index }}_city">City</label>
+                                <input id="address_{{ $index }}_city" type="text" name="addresses[{{ $index }}][city]" value="{{ $address['city'] ?? '' }}" data-required="true" required>
+                            </div>
+
+                            <div class="field">
+                                <label for="address_{{ $index }}_state">State</label>
+                                <input id="address_{{ $index }}_state" type="text" name="addresses[{{ $index }}][state]" value="{{ $address['state'] ?? '' }}" data-required="true" required>
+                            </div>
+
+                            <div class="field">
+                                <label for="address_{{ $index }}_postal_code">Postal Code</label>
+                                <input id="address_{{ $index }}_postal_code" type="text" name="addresses[{{ $index }}][postal_code]" value="{{ $address['postal_code'] ?? '' }}" data-required="true" required>
+                            </div>
+
+                            <div class="field">
+                                <label for="address_{{ $index }}_country">Country</label>
+                                <input id="address_{{ $index }}_country" type="text" name="addresses[{{ $index }}][country]" value="{{ $address['country'] ?? '' }}" data-required="true" required>
+                            </div>
+
+                            <div class="field full address-actions">
+                                <button type="button" class="btn btn-danger remove-address-btn">Remove Address</button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <div class="actions">
+                <button id="add-address-btn" class="btn btn-secondary" type="button">Add Another Address</button>
                 <button id="register-btn" class="btn btn-primary" type="submit">Register</button>
                 <a class="btn btn-secondary" href="{{ url('/') }}">Back To Menu</a>
             </div>
@@ -212,38 +323,188 @@
     <script>
         const form = document.getElementById('registration-form');
         const registerButton = document.getElementById('register-btn');
-        const requiredFields = [
-            document.getElementById('name'),
-            document.getElementById('email'),
-            document.getElementById('phone'),
-            document.getElementById('dob'),
-            document.getElementById('gender')
-        ];
+        const addressesContainer = document.getElementById('addresses-container');
+        const addAddressButton = document.getElementById('add-address-btn');
+        const addressTypes = @json(($addressTypes ?? collect())->map(fn ($type) => ['id' => $type->id, 'type' => $type->type])->values());
 
         function isEmpty(field) {
-            return field.value.trim() === '';
+            return (field.value || '').trim() === '';
         }
 
         function validateField(field) {
             field.classList.toggle('is-invalid', isEmpty(field));
         }
 
-        function updateRegisterButtonState() {
-            const hasEmptyRequired = requiredFields.some(isEmpty);
-            registerButton.disabled = hasEmptyRequired;
+        function getRequiredFields() {
+            return Array.from(document.querySelectorAll('[data-required="true"]'));
         }
 
-        requiredFields.forEach((field) => {
+        function bindValidation(field) {
+            if (field.dataset.validationBound === '1') {
+                return;
+            }
+
             const eventName = field.tagName === 'SELECT' ? 'change' : 'input';
             field.addEventListener(eventName, () => {
                 validateField(field);
                 updateRegisterButtonState();
             });
             field.addEventListener('blur', () => validateField(field));
-        });
+            field.dataset.validationBound = '1';
+        }
+
+        function bindAllValidation() {
+            getRequiredFields().forEach(bindValidation);
+        }
+
+        function getAddressBlockCount() {
+            if (!addressesContainer) {
+                return 0;
+            }
+            return addressesContainer.querySelectorAll('[data-address-index]').length;
+        }
+
+        function updateAddButtonState() {
+            if (!addAddressButton || !addressesContainer) {
+                return;
+            }
+            addAddressButton.disabled = getAddressBlockCount() >= 2;
+        }
+
+        function updateRemoveButtons() {
+            if (!addressesContainer) {
+                return;
+            }
+
+            const blocks = addressesContainer.querySelectorAll('[data-address-index]');
+            const showRemove = blocks.length > 1;
+            blocks.forEach((block) => {
+                const button = block.querySelector('.remove-address-btn');
+                if (button) {
+                    button.style.display = showRemove ? 'inline-block' : 'none';
+                }
+            });
+        }
+
+        function reindexAddressBlocks() {
+            if (!addressesContainer) {
+                return;
+            }
+
+            const blocks = addressesContainer.querySelectorAll('[data-address-index]');
+            blocks.forEach((block, index) => {
+                block.dataset.addressIndex = String(index);
+
+                const labels = block.querySelectorAll('label[for]');
+                labels.forEach((label) => {
+                    label.htmlFor = label.htmlFor.replace(/address_\d+_/g, `address_${index}_`);
+                });
+
+                const inputs = block.querySelectorAll('input, select');
+                inputs.forEach((input) => {
+                    if (input.id) {
+                        input.id = input.id.replace(/address_\d+_/g, `address_${index}_`);
+                    }
+                    if (input.name) {
+                        input.name = input.name.replace(/addresses\[\d+\]/g, `addresses[${index}]`);
+                    }
+                });
+            });
+        }
+
+        function buildAddressBlock(index) {
+            const options = addressTypes.map((type) => {
+                return `<option value="${type.id}">${type.type}</option>`;
+            }).join('');
+
+            return `
+                <div class="grid address-card" data-address-index="${index}">
+                    <div class="field full">
+                        <label for="address_${index}_address_type_id">Address Type</label>
+                        <select id="address_${index}_address_type_id" name="addresses[${index}][address_type_id]" data-required="true" required>
+                            <option value="">Select Address Type</option>
+                            ${options}
+                        </select>
+                    </div>
+
+                    <div class="field full">
+                        <label for="address_${index}_line1">Address Line 1</label>
+                        <input id="address_${index}_line1" type="text" name="addresses[${index}][line1]" data-required="true" required>
+                    </div>
+
+                    <div class="field full">
+                        <label for="address_${index}_line2">Address Line 2 (optional)</label>
+                        <input id="address_${index}_line2" type="text" name="addresses[${index}][line2]">
+                    </div>
+
+                    <div class="field">
+                        <label for="address_${index}_city">City</label>
+                        <input id="address_${index}_city" type="text" name="addresses[${index}][city]" data-required="true" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="address_${index}_state">State</label>
+                        <input id="address_${index}_state" type="text" name="addresses[${index}][state]" data-required="true" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="address_${index}_postal_code">Postal Code</label>
+                        <input id="address_${index}_postal_code" type="text" name="addresses[${index}][postal_code]" data-required="true" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="address_${index}_country">Country</label>
+                        <input id="address_${index}_country" type="text" name="addresses[${index}][country]" data-required="true" required>
+                    </div>
+
+                    <div class="field full address-actions">
+                        <button type="button" class="btn btn-danger remove-address-btn">Remove Address</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateRegisterButtonState() {
+            const hasEmptyRequired = getRequiredFields().some(isEmpty);
+            registerButton.disabled = hasEmptyRequired;
+        }
+
+        if (addAddressButton && addressesContainer) {
+            addAddressButton.addEventListener('click', () => {
+                if (getAddressBlockCount() >= 2) {
+                    return;
+                }
+
+                const nextIndex = getAddressBlockCount();
+                addressesContainer.insertAdjacentHTML('beforeend', buildAddressBlock(nextIndex));
+                bindAllValidation();
+                updateRemoveButtons();
+                updateAddButtonState();
+                updateRegisterButtonState();
+            });
+
+            addressesContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement) || !target.classList.contains('remove-address-btn')) {
+                    return;
+                }
+
+                const block = target.closest('[data-address-index]');
+                if (!block) {
+                    return;
+                }
+
+                block.remove();
+                reindexAddressBlocks();
+                bindAllValidation();
+                updateRemoveButtons();
+                updateAddButtonState();
+                updateRegisterButtonState();
+            });
+        }
 
         form.addEventListener('submit', (event) => {
-            requiredFields.forEach(validateField);
+            getRequiredFields().forEach(validateField);
             updateRegisterButtonState();
 
             if (registerButton.disabled) {
@@ -251,6 +512,10 @@
             }
         });
 
+        bindAllValidation();
+        reindexAddressBlocks();
+        updateRemoveButtons();
+        updateAddButtonState();
         updateRegisterButtonState();
     </script>
 </body>

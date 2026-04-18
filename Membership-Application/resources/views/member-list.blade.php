@@ -100,6 +100,15 @@
             font-size: 0.88rem;
         }
 
+        tbody tr {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8fbff;
+        }
+
         tr:last-child td {
             border-bottom: none;
         }
@@ -116,7 +125,7 @@
         <div class="header">
             <div>
                 <h1>Member List</h1>
-                <p></p>
+                <p class="muted">Click a row to view and edit member details.</p>
             </div>
             <a class="btn" href="{{ url('/') }}">Back To Menu</a>
         </div>
@@ -127,33 +136,32 @@
                     <tr>
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Phone</th>
-                        <th>DOB</th>
-                        <th>Gender</th>
-                        <th>Referral By</th>
                         <th>Referral Code</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($members as $member)
-                        <tr>
+                        <tr data-href="{{ url('/member-list/' . $member->id . '/edit') }}">
                             <td>{{ $member->name }}</td>
                             <td>{{ $member->email }}</td>
-                            <td>{{ $member->phone }}</td>
-                            <td>{{ $member->dob }}</td>
-                            <td>{{ $member->gender }}</td>
-                            <td>{{ $member->referral_by_name ?? '-' }}</td>
                             <td>{{ $member->referral_code }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td class="empty" colspan="9">No members found</td>
+                            <td class="empty" colspan="3">No members found</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('tbody tr[data-href]').forEach((row) => {
+            row.addEventListener('click', () => {
+                window.location.href = row.dataset.href;
+            });
+        });
+    </script>
 </body>
 
 </html>

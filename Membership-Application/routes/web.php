@@ -4,6 +4,8 @@ use App\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'member-menu');
-Route::view('/registration', 'registration');
+Route::get('/registration', [MemberController::class, 'registration']);
 Route::post('/registration', [MemberController::class, 'save']);
 Route::get('/member-list', [MemberController::class, 'index']);
+Route::get('/member-list/{member}/edit', [MemberController::class, 'edit']);
+Route::put('/member-list/{member}', [MemberController::class, 'update']);
