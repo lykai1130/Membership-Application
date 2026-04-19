@@ -172,6 +172,35 @@
             background: #fef2f2;
         }
 
+        .avatar-box {
+            width: 170px;
+            height: 170px;
+            border: 2px dashed #93c5fd;
+            border-radius: 14px;
+            background: #eff6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #1e3a8a;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            overflow: hidden;
+            padding: 8px;
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
         @media (max-width: 640px) {
             .grid {
                 grid-template-columns: 1fr;
@@ -232,7 +261,10 @@
 
                 <div class="field">
                     <label for="avatar_image">Avatar Image</label>
-                    <input id="avatar_image" type="file" name="avatar_image" accept="image/*">
+                    <input id="avatar_image" class="hidden-file-input" type="file" name="avatar_image" accept="image/*">
+                    <div id="avatar-box" class="avatar-box" role="button" tabindex="0" aria-label="Choose avatar image">
+                        Click to upload avatar
+                    </div>
                 </div>
 
                 <div class="field">
@@ -326,6 +358,8 @@
         const addressesContainer = document.getElementById('addresses-container');
         const addAddressButton = document.getElementById('add-address-btn');
         const addressTypes = @json(($addressTypes ?? collect())->map(fn ($type) => ['id' => $type->id, 'type' => $type->type])->values());
+        const avatarInput = document.getElementById('avatar_image');
+        const avatarBox = document.getElementById('avatar-box');
 
         function isEmpty(field) {
             return (field.value || '').trim() === '';
@@ -517,6 +551,31 @@
         updateRemoveButtons();
         updateAddButtonState();
         updateRegisterButtonState();
+
+        if (avatarInput && avatarBox) {
+            const showAvatarPreview = (file) => {
+                if (!file) {
+                    avatarBox.innerHTML = 'Click to upload avatar';
+                    return;
+                }
+
+                const previewUrl = URL.createObjectURL(file);
+                avatarBox.innerHTML = `<img src="${previewUrl}" alt="Avatar preview">`;
+            };
+
+            avatarBox.addEventListener('click', () => avatarInput.click());
+            avatarBox.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    avatarInput.click();
+                }
+            });
+
+            avatarInput.addEventListener('change', () => {
+                const file = avatarInput.files && avatarInput.files[0] ? avatarInput.files[0] : null;
+                showAvatarPreview(file);
+            });
+        }
     </script>
 </body>
 </html>

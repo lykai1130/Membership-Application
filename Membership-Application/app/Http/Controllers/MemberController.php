@@ -41,7 +41,62 @@ class MemberController extends Controller
 
     public function edit(Member $member)
     {
-        return view('member-edit', compact('member'));
+        $member->load(['addresses', 'documents', 'addresses.documents']);
+        $addressTypes = AddressType::query()
+            ->where('status', 'A')
+            ->orderBy('id')
+            ->limit(2)
+            ->get();
+
+        return view('member-edit', compact('member', 'addressTypes'));
+    }
+
+    public function referralTree(Member $member)
+    {
+        $treeRows = collect();
+        $visited = [$member->id => true];
+        $currentLevelIds = [$member->id];
+        $currentLevelNameMap = [$member->id => $member->name];
+        $level = 1;
+
+        while (!empty($currentLevelIds)) {
+            $children = Member::query()
+                ->whereIn('referral_id', $currentLevelIds)
+                ->orderBy('id')
+                ->get(['id', 'name', 'email', 'referral_code', 'referral_id']);
+
+            if ($children->isEmpty()) {
+                break;
+            }
+
+            $nextLevelIds = [];
+            $nextLevelNameMap = [];
+
+            foreach ($children as $child) {
+                if (isset($visited[$child->id])) {
+                    continue;
+                }
+
+                $visited[$child->id] = true;
+                $nextLevelIds[] = $child->id;
+                $nextLevelNameMap[$child->id] = $child->name;
+
+                $treeRows->push([
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'email' => $child->email,
+                    'referral_code' => $child->referral_code,
+                    'level' => $level,
+                    'referred_by' => $currentLevelNameMap[$child->referral_id] ?? '-',
+                ]);
+            }
+
+            $currentLevelIds = $nextLevelIds;
+            $currentLevelNameMap = $nextLevelNameMap;
+            $level++;
+        }
+
+        return view('referral-tree', compact('member', 'treeRows'));
     }
 
     public function save(Request $request) {
@@ -142,12 +197,29 @@ class MemberController extends Controller
 
     public function update(Request $request, Member $member)
     {
+        $addressTypes = AddressType::query()
+            ->where('status', 'A')
+            ->orderBy('id')
+            ->limit(2)
+            ->get();
+
+        $addressTypeIds = $addressTypes->pluck('id')->all();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('members', 'email')->ignore($member->id)],
             'phone' => ['required', 'string', 'max:30'],
             'dob' => ['required', 'date'],
             'gender' => ['required', 'string'],
+            'addresses' => ['required', 'array', 'min:1', 'max:2'],
+            'addresses.*.id' => ['nullable', 'integer'],
+            'addresses.*.address_type_id' => ['required', Rule::in($addressTypeIds)],
+            'addresses.*.line1' => ['required', 'string', 'max:255'],
+            'addresses.*.line2' => ['nullable', 'string', 'max:255'],
+            'addresses.*.city' => ['required', 'string', 'max:100'],
+            'addresses.*.state' => ['required', 'string', 'max:100'],
+            'addresses.*.postal_code' => ['required', 'string', 'max:20'],
+            'addresses.*.country' => ['required', 'string', 'max:100'],
         ]);
 
         $normalizedGender = $this->normalizeGender($validated['gender']);
@@ -157,13 +229,87 @@ class MemberController extends Controller
                 ->withErrors(['gender' => 'Gender must be Male or Female.']);
         }
 
-        $member->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'dob' => $validated['dob'],
-            'gender' => $normalizedGender,
-        ]);
+        $uniqueAddressTypeIds = collect($validated['addresses'])
+            ->pluck('address_type_id')
+            ->unique()
+            ->values();
+
+        if ($uniqueAddressTypeIds->count() !== count($validated['addresses'])) {
+            return back()
+                ->withInput()
+                ->withErrors(['addresses' => 'Each address type can only be entered once.']);
+        }
+
+        $memberExistingAddresses = $member->addresses()->get()->keyBy('id');
+        $submittedAddressIds = collect($validated['addresses'])
+            ->pluck('id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($submittedAddressIds->isNotEmpty()) {
+            $invalidIds = $submittedAddressIds->filter(fn ($id) => !$memberExistingAddresses->has($id));
+            if ($invalidIds->isNotEmpty()) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['addresses' => 'Invalid address selection for this member.']);
+            }
+        }
+
+        DB::transaction(function () use ($request, $member, $validated, $normalizedGender, $memberExistingAddresses) {
+            $member->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'dob' => $validated['dob'],
+                'gender' => $normalizedGender,
+            ]);
+
+            $keptAddressIds = [];
+            foreach ($validated['addresses'] as $addressInput) {
+                $addressId = isset($addressInput['id']) ? (int) $addressInput['id'] : null;
+                $addressData = [
+                    'address_type_id' => $addressInput['address_type_id'],
+                    'line1' => $addressInput['line1'],
+                    'line2' => $addressInput['line2'] ?? null,
+                    'city' => $addressInput['city'],
+                    'state' => $addressInput['state'],
+                    'postal_code' => $addressInput['postal_code'],
+                    'country' => $addressInput['country'],
+                ];
+
+                if ($addressId && $memberExistingAddresses->has($addressId)) {
+                    $address = $memberExistingAddresses->get($addressId);
+                    $address->update($addressData);
+                } else {
+                    $address = Address::create([
+                        'member_id' => $member->id,
+                        ...$addressData,
+                    ]);
+                }
+
+                $keptAddressIds[] = $address->id;
+            }
+
+            $removedAddresses = $member->addresses()
+                ->whereNotIn('id', $keptAddressIds)
+                ->get();
+
+            foreach ($removedAddresses as $removedAddress) {
+                $removedAddress->documents()->delete();
+            }
+
+            $member->addresses()
+                ->whereNotIn('id', $keptAddressIds)
+                ->delete();
+
+            $this->storeUploadedDocument($request, $member, 'avatar_image', 'Avatar Image');
+
+            $proofAddress = $member->addresses()
+                ->orderBy('id')
+                ->first();
+            $this->storeUploadedDocument($request, $proofAddress ?? $member, 'proof_of_address', 'Proof Of Address');
+        });
 
         return back()->with('success', 'Member updated successfully.');
     }
