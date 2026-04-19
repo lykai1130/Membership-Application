@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             AddressTypeSeeder::class,
             PromotionSeeder::class,
             RewardSeeder::class,
-            MemberSeeder::class
+            MemberSeeder::class,
+            RewardAchieverSeeder::class,
         ]);
     }
 }

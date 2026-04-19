@@ -83,6 +83,26 @@
             background: #eff6ff;
         }
 
+        .btn-export {
+            border-color: #0f766e;
+            background: #0d9488;
+            color: #fff;
+        }
+
+        .btn-export:hover {
+            background: #0f766e;
+        }
+
+        .btn-export-excel {
+            border-color: #047857;
+            background: #059669;
+            color: #fff;
+        }
+
+        .btn-export-excel:hover {
+            background: #047857;
+        }
+
         .filters {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -234,10 +254,10 @@
         <div class="actions">
             <div class="button-group">
                 <a class="btn btn-outline" href="{{ url('/reward-report') }}">Reset</a>
-                <a class="btn" href="{{ url('/reward-report/export?' . http_build_query(array_merge($filters, ['format' => 'csv']))) }}">
+                <a class="btn btn-export" href="{{ url('/reward-report/export?' . http_build_query(array_merge($filters, ['format' => 'csv']))) }}">
                     Export CSV
                 </a>
-                <a class="btn" href="{{ url('/reward-report/export?' . http_build_query(array_merge($filters, ['format' => 'excel']))) }}">
+                <a class="btn btn-export-excel" href="{{ url('/reward-report/export?' . http_build_query(array_merge($filters, ['format' => 'excel']))) }}">
                     Export Excel
                 </a>
             </div>

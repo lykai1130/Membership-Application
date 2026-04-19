@@ -43,25 +43,36 @@ class MemberController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $search = trim((string) $request->query('search', ''));
+        $validated = $request->validate([
+            'search' => ['nullable', 'string'],
+            'format' => ['nullable', 'in:csv,excel'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
+        $format = $validated['format'] ?? 'csv';
 
         $members = $this->buildMemberListQuery($search)
             ->orderByDesc('members.created_at')
             ->get();
 
-        $filename = 'member-list-' . now()->format('YmdHis') . '.csv';
+        $filename = 'member-list-' . now()->format('YmdHis') . ($format === 'excel' ? '.xls' : '.csv');
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type' => $format === 'excel'
+                ? 'application/vnd.ms-excel; charset=UTF-8'
+                : 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        return response()->streamDownload(function () use ($members) {
+        return response()->streamDownload(function () use ($members, $format) {
             $output = fopen('php://output', 'wb');
             if ($output === false) {
                 return;
             }
 
-            fwrite($output, "\xEF\xBB\xBF");
+            if ($format !== 'excel') {
+                fwrite($output, "\xEF\xBB\xBF");
+            }
+
             fputcsv($output, ['Name', 'Email', 'Referral Code']);
 
             foreach ($members as $member) {

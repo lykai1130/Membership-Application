@@ -94,6 +94,16 @@
             background: #0f766e;
         }
 
+        .btn-export-excel {
+            border-color: #047857;
+            background: #059669;
+            color: #fff;
+        }
+
+        .btn-export-excel:hover {
+            background: #047857;
+        }
+
         .btn-danger {
             border-color: #b91c1c;
             background: #dc2626;
@@ -258,7 +268,10 @@
             <div class="filter-actions">
                 <button class="btn btn-small" type="submit">Search</button>
                 <button class="btn btn-small btn-export" type="submit" formaction="{{ url('/member-list/export') }}"
-                    formmethod="GET">Export CSV</button>
+                    formmethod="GET" name="format" value="csv">Export CSV</button>
+                <button class="btn btn-small btn-export-excel" type="submit"
+                    formaction="{{ url('/member-list/export') }}" formmethod="GET" name="format"
+                    value="excel">Export Excel</button>
                 <a class="btn btn-small btn-clear" href="{{ url('/member-list') }}">Clear</a>
             </div>
         </form>

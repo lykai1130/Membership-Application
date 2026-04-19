@@ -417,7 +417,7 @@
             <div class="doc-box">
                 <ul>
                     @forelse ($member->documents as $document)
-                        <li>Member: {{ $document->document_name }} ({{ $document->document_path }})</li>
+                        <li>Member: {{ $document->document_name }}</li>
                     @empty
                         <li>No member-level documents yet.</li>
                     @endforelse
@@ -430,7 +430,7 @@
                     @foreach ($member->addresses as $address)
                         @foreach ($address->documents as $document)
                             @php $hasAddressDocuments = true; @endphp
-                            <li>Address #{{ $address->id }}: {{ $document->document_name }} ({{ $document->document_path }})</li>
+                            <li>Address #{{ $address->id }}: {{ $document->document_name }}</li>
                         @endforeach
                     @endforeach
 
