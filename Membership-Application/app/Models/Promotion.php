@@ -16,6 +16,11 @@ class Promotion extends Model
         'status',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
+
     public function rewards(): HasMany
     {
         return $this->hasMany(Reward::class, 'promotion_id');

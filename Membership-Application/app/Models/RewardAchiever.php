@@ -11,6 +11,13 @@ class RewardAchiever extends Model
         'member_id',
         'reward_id',
         'achieved_at',
+        'member_name_snapshot',
+        'member_email_snapshot',
+        'member_referral_code_snapshot',
+    ];
+
+    protected $casts = [
+        'achieved_at' => 'date',
     ];
 
     public function member(): BelongsTo

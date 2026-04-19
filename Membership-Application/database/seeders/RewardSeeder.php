@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Promotion;
 use App\Models\Reward;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,25 +14,30 @@ class RewardSeeder extends Seeder
      */
     public function run(): void
     {
-        Reward::updateOrCreate(
-            ['promotion_id' => 1, 'referral_count' => 10],
-            [
-                'reward_value' => 100,
-            ]
-        );
+        $promotion = Promotion::where('name', 'April Promotion')->first();
+        if (!$promotion) {
+            return;
+        }
 
-        Reward::updateOrCreate(
-            ['promotion_id' => 1, 'referral_count' => 50],
-            [
-                'reward_value' => 500,
-            ]
-        );
+        $fixedTiers = [
+            10 => 100,
+            50 => 500,
+            100 => 1000,
+        ];
 
-        Reward::updateOrCreate(
-            ['promotion_id' => 1, 'referral_count' => 100],
-            [
-                'reward_value' => 1000,
-            ]
-        );
+        foreach ($fixedTiers as $referralCount => $rewardValue) {
+            Reward::updateOrCreate(
+                [
+                    'promotion_id' => $promotion->id,
+                    'referral_count' => $referralCount,
+                ],
+                [
+                    'reward_value' => $rewardValue,
+                ]
+            );
+        }
+
+        // Tier 4 is uncapped and resolved dynamically:
+        // each 10 referrals after 100 earns USD 150 (110, 120, 130, ...).
     }
 }

@@ -25,4 +25,43 @@ class Reward extends Model
     {
         return $this->hasMany(RewardAchiever::class, 'reward_id');
     }
+
+    public static function rewardValueForReferralCount(int $referralCount): ?int
+    {
+        if ($referralCount === 10) {
+            return 100;
+        }
+
+        if ($referralCount === 50) {
+            return 500;
+        }
+
+        if ($referralCount === 100) {
+            return 1000;
+        }
+
+        if ($referralCount > 100 && $referralCount % 10 === 0) {
+            return 150;
+        }
+
+        return null;
+    }
+
+    public static function resolveForPromotion(int $promotionId, int $referralCount): ?self
+    {
+        $rewardValue = self::rewardValueForReferralCount($referralCount);
+        if ($rewardValue === null) {
+            return null;
+        }
+
+        return self::firstOrCreate(
+            [
+                'promotion_id' => $promotionId,
+                'referral_count' => $referralCount,
+            ],
+            [
+                'reward_value' => $rewardValue,
+            ]
+        );
+    }
 }

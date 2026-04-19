@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AddressTypeSeeder::class,
             PromotionSeeder::class,
-            RewardSeeder::class
+            RewardSeeder::class,
+            MemberSeeder::class
         ]);
     }
 }

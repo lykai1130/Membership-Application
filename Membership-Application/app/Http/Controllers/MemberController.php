@@ -6,6 +6,7 @@ use App\Models\Address;
 use App\Models\AddressType;
 use App\Models\Member;
 use App\Models\Documents;
+use App\Services\RewardAchieverService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -99,7 +100,7 @@ class MemberController extends Controller
         return view('referral-tree', compact('member', 'treeRows'));
     }
 
-    public function save(Request $request) {
+    public function save(Request $request, RewardAchieverService $rewardAchieverService) {
         $addressTypes = AddressType::query()
             ->where('status', 'A')
             ->orderBy('id')
@@ -160,7 +161,7 @@ class MemberController extends Controller
                 ->withErrors(['addresses' => 'Each address type can only be entered once.']);
         }
 
-        DB::transaction(function () use ($request, $validated, $normalizedGender, $referralMemberId, $generatedReferralCode) {
+        DB::transaction(function () use ($request, $validated, $normalizedGender, $referralMemberId, $generatedReferralCode, $rewardAchieverService) {
             $member = Member::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -190,6 +191,10 @@ class MemberController extends Controller
             // Attach proof-of-address to an address documentable when available.
             $proofDocumentable = $createdAddresses[0] ?? $member;
             $this->storeUploadedDocument($request, $proofDocumentable, 'proof_of_address', 'Proof Of Address');
+
+            if ($referralMemberId !== null) {
+                $rewardAchieverService->evaluateMemberForActivePromotions($referralMemberId);
+            }
         });
 
         return back()->with('success', 'Member registered successfully.');
