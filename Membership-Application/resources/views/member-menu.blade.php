@@ -89,6 +89,7 @@
         <div class="button-grid">
             <a class="menu-button" href="{{ url('/registration') }}">Registration</a>
             <a class="menu-button" href="{{ url('/member-list') }}">Member List</a>
+            <a class="menu-button" href="{{ url('/promotion') }}">Promotion Setup</a>
             <a class="menu-button" href="{{ url('/reward-report') }}">Reward Report</a>
         </div>
     </div>

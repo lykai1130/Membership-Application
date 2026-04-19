@@ -191,7 +191,7 @@
         <div class="header">
             <div>
                 <h1>Reward Report</h1>
-                <p class="muted">View and export rewards earned by members during promotions.</p>
+                <p></p>
             </div>
             <a class="btn btn-outline" href="{{ url('/') }}">Back To Menu</a>
         </div>
@@ -232,9 +232,6 @@
         </form>
 
         <div class="actions">
-            <div class="muted">
-                Total rewards: {{ $rows->count() }}
-            </div>
             <div class="button-group">
                 <a class="btn btn-outline" href="{{ url('/reward-report') }}">Reset</a>
                 <a class="btn" href="{{ url('/reward-report/export?' . http_build_query(array_merge($filters, ['format' => 'csv']))) }}">
@@ -252,10 +249,7 @@
                     <tr>
                         <th>Achieved Date</th>
                         <th>Member Name</th>
-                        <th>Member Email</th>
                         <th>Promotion</th>
-                        <th>Promotion Start</th>
-                        <th>Promotion End</th>
                         <th>Referral Count</th>
                         <th>Reward Value</th>
                     </tr>
@@ -265,16 +259,13 @@
                         <tr>
                             <td>{{ optional($row->achieved_at)->format('Y-m-d') ?? '-' }}</td>
                             <td>{{ $row->member?->name ?? $row->member_name_snapshot ?? '-' }}</td>
-                            <td>{{ $row->member?->email ?? $row->member_email_snapshot ?? '-' }}</td>
                             <td>{{ $row->reward?->promotion?->name ?? '-' }}</td>
-                            <td>{{ optional($row->reward?->promotion?->start_date)->format('Y-m-d') ?? '-' }}</td>
-                            <td>{{ optional($row->reward?->promotion?->end_date)->format('Y-m-d') ?? '-' }}</td>
                             <td>{{ $row->reward?->referral_count ?? '-' }}</td>
                             <td>{{ isset($row->reward?->reward_value) ? 'USD ' . $row->reward->reward_value : '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td class="empty" colspan="8">No rewards found for selected filters.</td>
+                            <td class="empty" colspan="5">No rewards found for selected filters.</td>
                         </tr>
                     @endforelse
                 </tbody>

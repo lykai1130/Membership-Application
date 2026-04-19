@@ -7,11 +7,13 @@ use App\Models\AddressType;
 use App\Models\Member;
 use App\Models\Documents;
 use App\Services\RewardAchieverService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MemberController extends Controller
 {
@@ -26,18 +28,52 @@ class MemberController extends Controller
         return view('registration', compact('addressTypes'));
     }
 
-    public function index() {
-        $members = Member::query()
-            ->select([
-                'members.id',
-                'members.name',
-                'members.email',
-                'members.referral_code',
-            ])
+    public function index(Request $request)
+    {
+        $search = trim((string) $request->query('search', ''));
+        $perPage = 5;
+
+        $members = $this->buildMemberListQuery($search)
+            ->orderByDesc('members.created_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('member-list', compact('members', 'search'));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $search = trim((string) $request->query('search', ''));
+
+        $members = $this->buildMemberListQuery($search)
             ->orderByDesc('members.created_at')
             ->get();
 
-        return view('member-list', compact('members'));
+        $filename = 'member-list-' . now()->format('YmdHis') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->streamDownload(function () use ($members) {
+            $output = fopen('php://output', 'wb');
+            if ($output === false) {
+                return;
+            }
+
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Name', 'Email', 'Referral Code']);
+
+            foreach ($members as $member) {
+                fputcsv($output, [
+                    $member->name,
+                    $member->email,
+                    $member->referral_code,
+                ]);
+            }
+
+            fclose($output);
+        }, $filename, $headers);
     }
 
     public function edit(Member $member)
@@ -319,7 +355,39 @@ class MemberController extends Controller
         return back()->with('success', 'Member updated successfully.');
     }
 
-    public function delete() {}
+    public function delete(Member $member)
+    {
+        DB::transaction(function () use ($member) {
+            foreach ($member->addresses()->get() as $address) {
+                $address->documents()->delete();
+            }
+
+            $member->documents()->delete();
+            $member->delete();
+        });
+
+        return redirect('/member-list')->with('success', 'Member removed successfully.');
+    }
+
+    private function buildMemberListQuery(string $search): Builder
+    {
+        $referralSearch = strtoupper($search);
+
+        return Member::query()
+            ->select([
+                'members.id',
+                'members.name',
+                'members.email',
+                'members.referral_code',
+            ])
+            ->when($search !== '', function ($query) use ($search, $referralSearch) {
+                $query->where(function ($nestedQuery) use ($search, $referralSearch) {
+                    $nestedQuery->where('members.name', 'like', '%' . $search . '%')
+                        ->orWhere('members.email', 'like', '%' . $search . '%')
+                        ->orWhere('members.referral_code', 'like', '%' . $referralSearch . '%');
+                });
+            });
+    }
 
     private function generateReferralCode(): string
     {
