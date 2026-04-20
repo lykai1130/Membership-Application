@@ -92,9 +92,9 @@ Secure upload and validation for:
 
 ## Tech Stack
 
-Backend: Laravel
-Frontend: Blade
-Database: SQLite
+**Backend:** Laravel
+**Frontend:** Blade
+**Database:** SQLite
 
 ---
 
