@@ -98,7 +98,7 @@ Database: SQLite
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
 git clone https://github.com/lykai1130/Membership-Application.git
