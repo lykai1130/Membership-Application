@@ -14,7 +14,7 @@ The project is built to showcase:
 - Advanced Eloquent relationships
 - Polymorphic associations
 - Recursive referral hierarchy (tree structure)
-- Business logic implementation (reward system)
+- Reward system
 - Data filtering and export functionality
 
 ---
@@ -80,7 +80,7 @@ Members can refer other members, forming a hierarchical structure.
 ### 3. Recursive Tree Traversal
 Referral hierarchy is built dynamically using recursive logic.
 
-### 4. Business Logic Layer
+### 4. Reward Layer
 Reward calculation based on referral milestones and promotion rules.
 
 ### 5. File Handling
@@ -92,11 +92,9 @@ Secure upload and validation for:
 
 ## Tech Stack
 
-| Layer      | Technology |
-|------------|------------|
-| Backend    | Laravel 10+ |
-| Frontend   | Blade       |
-| Database   | SQLite      |
+Backend: Laravel
+Frontend: Blade
+Database: SQLite
 
 ---
 
@@ -116,3 +114,11 @@ php artisan migrate --seed
 ## Run in different terminal
 php artisan serve
 php artisan schedule:work
+
+## If avatar image broken
+php artisan storage:link
+
+## Still broken
+php artisan storage:unlink
+php artisan storage:link
+php artisan optimize:clear
